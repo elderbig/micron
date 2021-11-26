@@ -6,7 +6,6 @@ use delay_timer;
 use anyhow::Result;
 use delay_timer::prelude::*;
 use std::time::Duration;
-use std::thread;
 use log::{info, error};
 use configuration::reader;
 use etcd_rs::*;
@@ -77,11 +76,12 @@ async fn main() -> Result<()>{
         Some(x)=>x,
         None=>5
     };
-    
+    let mut interval = tokio::time::interval(Duration::from_secs(6));
     if enable_resister {
         let register = conf.register.register.unwrap();
         let reg_root = conf.register.reg_root.unwrap();
         let mut is_conn = false;
+        
         while !is_conn {
             let reg_servers:Vec<String> = register.split(",").map(|x|x.to_owned()).collect();
             info!("try to connect to register [{:?}]", &reg_servers);
@@ -96,6 +96,7 @@ async fn main() -> Result<()>{
                 Err(e)=>{
                     is_conn = false;
                     error!("{}", e);
+                    interval.tick().await;
                     continue;
                 }
             };
@@ -115,13 +116,13 @@ async fn main() -> Result<()>{
                     is_conn = false;
                     client.shutdown().await?;
                     error!("{}", e);
-                    thread::sleep(Duration::from_secs(5));   
+                    interval.tick().await; 
                 }
             }
         }
     }else {
         info!("Register is disable by config,ignore register...");
-        let mut interval = tokio::time::interval(Duration::from_secs(6));
+        
         loop{
             interval.tick().await;
         }
