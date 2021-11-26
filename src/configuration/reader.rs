@@ -89,22 +89,12 @@ fn checker(config:Config)->Result<(), String>{
         }
         //check script file in command string
         let script_path = splited[1];
-        // match File::open(script_path){
-        //     Ok(_)=> info!("check script file [{0}] in task [{1}]... OK", script_path, i),
-        //     Err(e) => {
-        //         error!("service[{0}].shell [{1}] is not a file, {2}",i ,script_path ,e);
-        //         return Err("open shell script error!".into())
-        //     }
-        // }
-        //check privilege of script file
         match fs::metadata(script_path){
             Ok(m)=>{
                 let mode = m.mode();
                 let user_have_execute = mode & 0o100;
                 let group_has_write_access = mode & 0o020;
                 let others_have_write_access = mode & 0o002;
-                info!("group_has_write_access={}", group_has_write_access);
-                info!("others_have_write_access={}", others_have_write_access);
                 // only current user can modify script file
                 if group_has_write_access!=0 || others_have_write_access!=0{
                     error!("privilege of script [{}] must be write only by owner!", script_path);
