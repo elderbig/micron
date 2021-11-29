@@ -35,7 +35,7 @@ pub fn read(file_path: &str) ->Result<Config, &str> {
                     Some(l)=>l,
                     None=>0,
                 };
-                if k>0 && l>0 && k>l-5 {
+                if k>0 && l>0 && k>l as u64 - 5 {
                     error!("configed lease = [{0}], keep_alive = [{1}], and lease must be 5(s) more then keep_alive atleast", l, k);
                     return Err("lease&keep_alive relation mismatching");
                 }

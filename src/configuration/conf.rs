@@ -29,6 +29,6 @@ pub struct Register {
     pub register_keys: Option<String>,
     pub enable_pull: Option<bool>,
     pub enable_push: Option<bool>,
-    pub lease_time: Option<u64>,
+    pub lease_time: Option<i64>,
     pub keep_alive: Option<u64>,
 }

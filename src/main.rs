@@ -8,13 +8,11 @@ use delay_timer::prelude::*;
 use std::time::Duration;
 use log::{info, error};
 use configuration::reader;
-use etcd_rs::*;
 use register::utils;
-use futures::{future::FutureExt};
+use etcd_client::*;
 
 
 #[tokio::main]
-// #[async_std::main]
 async fn main() -> Result<()>{
     log4rs::init_file("conf/log4rs.yaml", Default::default()).unwrap();
     let conf = match reader::read("conf/config.toml"){
@@ -85,13 +83,8 @@ async fn main() -> Result<()>{
         while !is_conn {
             let reg_servers:Vec<String> = register.split(",").map(|x|x.to_owned()).collect();
             info!("try to connect to register [{:?}]", &reg_servers);
-            let result = etcd_rs::Client::connect(ClientConfig {
-                endpoints: reg_servers,
-                auth: None,
-                tls: None,
-            })
-            .await;
-            let client = match result{
+            let result = Client::connect(reg_servers,None).await;
+            let mut client = match result{
                 Ok(c)=>c,
                 Err(e)=>{
                     is_conn = false;
@@ -100,29 +93,23 @@ async fn main() -> Result<()>{
                     continue;
                 }
             };
-            let c = client.clone();
             let r = reg_root.clone();
             let s = s_name_vec.clone();
-            let result =tokio::task::spawn(async move { utils::keep_alive_lease(&c, &r, &s, lease_time, keep_alive).await}).await?;
+            let result =tokio::task::spawn(async move { utils::keep_alive_lease(&mut client, &r, &s, lease_time, keep_alive).await}).await?;
             match result{
                 Ok(_)=>{
                     is_conn = true;
-                    let c = client.clone();
-                    tokio::signal::ctrl_c()
-                    .then(|_| async { c.shutdown().await })
-                    .await?;
                 },
                 Err(e)=>{
                     is_conn = false;
-                    client.shutdown().await?;
                     error!("{}", e);
+                    info!("conntect to etcd failed, retry again...");
                     interval.tick().await; 
                 }
             }
         }
     }else {
         info!("Register is disable by config,ignore register...");
-        
         loop{
             interval.tick().await;
         }
