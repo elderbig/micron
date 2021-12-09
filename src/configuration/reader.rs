@@ -106,8 +106,8 @@ fn checker(config:Config)->Result<(), String>{
                     return Err("script file privilege error!".into()) 
                 }
                 // current user must be owner of script file
-                if m.uid() != users::get_current_gid(){
-                    error!("The owner of script [{}] [{}] is not current user [{}]", m.uid(), script_path, users::get_current_gid());
+                if m.uid() != users::get_current_uid(){
+                    error!("The owner of script [{}] [{}] is not current user [{}]", m.uid(), script_path, users::get_current_uid());
                     return Err("script owner is not current user".into())
                 }
             },

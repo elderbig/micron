@@ -23,7 +23,7 @@ async fn main() -> Result<()>{
         }
     };
 
-    info!("micron started, version = [ 0.1.1 ]");
+    info!("micron started, version = [ 0.1.2 ]");
     info!("Begin init task ...");
     let delay_timer = DelayTimerBuilder::default().build();
     let mut s_name_vec:Vec<String> = Vec::new();
